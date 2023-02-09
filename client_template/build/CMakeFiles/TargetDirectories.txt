@@ -1,0 +1,3 @@
+/home/koutit/duels/games/snake/client_template/build/CMakeFiles/snake.dir
+/home/koutit/duels/games/snake/client_template/build/CMakeFiles/edit_cache.dir
+/home/koutit/duels/games/snake/client_template/build/CMakeFiles/rebuild_cache.dir

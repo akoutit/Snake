@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -rdynamic CMakeFiles/snake_server.dir/server.cpp.o -o snake_server  -lzmq /usr/lib/x86_64-linux-gnu/libyaml-cpp.so.0.7.0 

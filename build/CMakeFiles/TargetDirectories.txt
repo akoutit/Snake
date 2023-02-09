@@ -1,0 +1,7 @@
+/home/koutit/duels/games/snake/build/CMakeFiles/snake_server.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/edit_cache.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/rebuild_cache.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/list_install_components.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/install.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/install/local.dir
+/home/koutit/duels/games/snake/build/CMakeFiles/install/strip.dir
