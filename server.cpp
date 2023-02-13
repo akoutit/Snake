@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   InitDisplay init = mechanics.initGame();
 
   // inform displays and get players (multithread by default for simultaneous games)
-  const auto [player1, player2] = game_io.initPlayers<SnakeAI>(argc, argv, init, 5,6 ); {}
+  const auto [player1, player2] = game_io.initPlayers<SnakeAI>(argc, argv, init, 4,5); {}
 
   
 

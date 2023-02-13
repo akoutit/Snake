@@ -74,7 +74,7 @@ struct Input
 
 struct Feedback
 {
-  Snake pose; Snake pose_other; Position apple; State __state;
+  Snake pose; Snake pose_other; std::vector<Position> apple; State __state;
   std::string serialize() const 
   {
     std::stringstream ss;
@@ -89,14 +89,14 @@ struct Feedback
     const auto node{YAML::Load(yaml)};
     pose = node["pose"].as<Snake>();
     pose_other = node["pose_other"].as<Snake>();
-    apple = node["apple"].as<Position>();
+    apple = node["apple"].as<std::vector<Position>>();
     __state = node["__state"].as<State>();
   }
 };
 
 struct Display
 {
-  Snake snake1; Snake snake2; Position apples; float score1; float score2;
+  Snake snake1; Snake snake2; std::vector<Position> apples; float score1; float score2;
   std::string serialize(Result result) const 
   {
     std::stringstream ss;
