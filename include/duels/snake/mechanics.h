@@ -44,10 +44,8 @@ public:
         display_msg.score1=0;
         display_msg.score2=0;
 
-        apples().push_back({240,240});
-        apples().push_back({100,100});
-        apples().push_back({120,120});
-        for(int i=0;i<apples().size();i++){move_apple(i);}
+        int nbr_apples = 3;
+        for(int i=0;i<nbr_apples;i++){move_apple(i);}
 
         snake1().head.x=60;
         snake1().head.y=160;
@@ -86,8 +84,9 @@ public:
             apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
 
         }
+        if (i<apples().size()){apples()[i]=P;}
+        else{apples().push_back(P);}
 
-        apples()[i]=P;
 
     }
 
