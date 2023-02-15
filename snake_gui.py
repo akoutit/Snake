@@ -140,9 +140,9 @@ def draw():
     # On dessine une surface de jeu:
     
     pygame.draw.rect(screen, (GREY), Rect(w*0+d, w*10+d, w*50, w*40), 3)
-
-    screen.blit(apple,(w*food_position[0]+d, w*food_position[1]+d))    
-    screen.blit(apple,(w*food_position[2]+d, w*food_position[3]+d)) 
+    for index, item in enumerate(food_positions):
+        screen.blit(apple,(w*item[0]+d, w*item[1]+d))    
+    
     # On dessine les éléments du serpent:
     for index, item in enumerate(snake1_positions):
         # On dessine la tête en orange (contours uniquement):
@@ -306,7 +306,7 @@ while again:
     snake2_positions = [to_list(msg.snake2.head)]+convert_vector(msg.snake2.body)                                                                          #
                                                                                                                    #
                                           #
-    food_position = [msg.apples[0].x/10,msg.apples[0].y/10,msg.apples[1].x/10,msg.apples[1].y/10]                                                                                     #
+    food_positions = convert_vector(msg.apples)                                                                                     #
                                                                                                                    #
     # Création d'une surface pour le game over:                                                                    #
     game_over_surface = this_font.render("G A M E    O V E R!", True, (ROUGE))                               #
