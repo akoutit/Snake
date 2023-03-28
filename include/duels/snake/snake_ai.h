@@ -166,50 +166,47 @@ public:
 
     }
 
-    void calcul_distance_voisins(int x, int y, array<array<int,22>,27> &grid)
-    {
-        int distance_obstacle = 10000000;
-        int distance_parent = grid[x][y] ;
+    void calcul_distance_voisins(vector<Position> to_check, array<array<int,22>,27> &grid)
+        {
 
-        bool must_calcul_right = false;
-        bool must_calcul_left = false;
-        bool must_calcul_up = false;
-        bool must_calcul_down = false;
 
-        // fils droite
-        if ( ((x+1)<25) && (distance_parent+1 < grid[x+1][y]) && (grid[x+1][y]<distance_obstacle) )
-        {
-            grid[x+1][y] = distance_parent + 1;
-            must_calcul_right = true;
-        }
-        // fils gauche
-        if ( ((x-1)>=0) && (distance_parent+1 < grid[x-1][y]) && (grid[x-1][y]<distance_obstacle) )
-        {
-            grid[x-1][y] = distance_parent + 1;
-            must_calcul_left = true;
-        }
-        // fils haut
-        if ( ((y-1)>=0) && (distance_parent+1 < grid[x][y-1]) && (grid[x][y-1]<distance_obstacle) )
-        {
-            grid[x][y-1] = distance_parent + 1;
-            must_calcul_up = true;
-        }
-        // fils bas
-        if ( ((y+1)<20) && (distance_parent+1 < grid[x][y+1]) && (grid[x][y+1]<distance_obstacle) )
-        {
-            grid[x][y+1] = distance_parent + 1;
-            must_calcul_down = true;
-        }
+            if (to_check.size()>0)
+            {
+                int distance_obstacle = 10000000;
 
-        if (must_calcul_right)
-            calcul_distance_voisins(x+1,y,grid);
-        if (must_calcul_left)
-            calcul_distance_voisins(x-1,y,grid);
-        if (must_calcul_up)
-            calcul_distance_voisins(x,y-1,grid);
-        if (must_calcul_down)
-            calcul_distance_voisins(x,y+1,grid);
-    }
+                int x = to_check[0].x;
+                int y = to_check[0].y;
+                int distance_parent = grid[x][y] ;
+
+
+                // fils droite
+                if ( ((x+1)<25) && (distance_parent+1 < grid[x+1][y]) && (grid[x+1][y]<distance_obstacle) )
+                {
+                    grid[x+1][y] = distance_parent + 1;
+                    to_check.push_back(Position{x+1,y});
+                }
+                // fils gauche
+                if ( ((x-1)>=0) && (distance_parent+1 < grid[x-1][y]) && (grid[x-1][y]<distance_obstacle) )
+                {
+                    grid[x-1][y] = distance_parent + 1;
+                    to_check.push_back(Position{x-1,y});
+                }
+                // fils haut
+                if ( ((y-1)>=0) && (distance_parent+1 < grid[x][y-1]) && (grid[x][y-1]<distance_obstacle) )
+                {
+                    grid[x][y-1] = distance_parent + 1;
+                    to_check.push_back(Position{x,y-1});
+                }
+                // fils bas
+                if ( ((y+1)<20) && (distance_parent+1 < grid[x][y+1]) && (grid[x][y+1]<distance_obstacle) )
+                {
+                    grid[x][y+1] = distance_parent + 1;
+                    to_check.push_back(Position{x,y+1});
+                }
+                to_check.erase(to_check.begin());
+                calcul_distance_voisins(to_check,grid);
+            }
+        }
 
     array<array<int,22>,27> distance_grid(Position objective)
     {
@@ -235,12 +232,21 @@ public:
         int y_objective = (objective.y-offset_y)/size_case;
 
         grid[x_objective][y_objective] = 0;
-        calcul_distance_voisins(x_objective,y_objective,grid);
+        calcul_distance_voisins({Position{x_objective,y_objective}},grid);
 
         if(obstacle(objective.x,objective.y,true))
         {
             grid[x_objective][y_objective] = distance_obstacle;
         }
+        for (int x=0; x<27; x=x+1)
+                {
+                    for (int y=0; y<22; y=y+1)
+                    {
+                        if ( (grid[x][y]<distance_obstacle) and (obstacle(offset_x+size_case*x,offset_y+size_case*y,true)) )
+                            grid[x][y] = distance_obstacle-1;
+                    }
+                }
+
 
         return grid;
     }
@@ -263,26 +269,78 @@ public:
 
         // Se déplace aléatoirement sur la map sans éviter les obstacles. Continue tout droit avec une probabilité de 3/5.
         if(difficulty==1)
-        {
-            srand(time(0));
-            switch(rand()%5){
-            case 0:
-                input.action = Input::Action::MOVE;
-                break;
-            case 1:
-                input.action = Input::Action::TURN_LEFT;
-                break;
-            case 2:
-                input.action = Input::Action::TURN_RIGHT;
-                break;
-            case 3:
-                input.action = Input::Action::MOVE;
-                break;
-            case 4:
-                input.action = Input::Action::MOVE;
-                break;
-            }
-        }
+                {
+                    srand(time(0));
+
+                    int head_x = feedback.pose.head.x;
+                    int head_y = feedback.pose.head.y;
+                    Position next_position = {-20,80};
+
+                    while(obstacle(next_position.x,next_position.y,false))
+                    {
+
+                        switch(rand()%5)
+                        {
+                            case 0:
+                                input.action = Input::Action::TURN_RIGHT;
+                                switch(feedback.pose.head.t)
+                                {
+                                    case Orientation::RIGHT:
+                                        next_position = {head_x,head_y+size_case};
+                                    break;
+                                    case Orientation::LEFT:
+                                        next_position = {head_x,head_y-size_case};
+                                    break;
+                                    case Orientation::UP:
+                                        next_position = {head_x+size_case,head_y};
+                                    break;
+                                    case Orientation::DOWN:
+                                        next_position = {head_x-size_case,head_y};
+                                    break;
+                                }
+                            break;
+
+                            case 1:
+                                input.action = Input::Action::TURN_LEFT;
+                                switch(feedback.pose.head.t)
+                                {
+                                    case Orientation::RIGHT:
+                                        next_position = {head_x,head_y-size_case};
+                                    break;
+                                    case Orientation::LEFT:
+                                        next_position = {head_x,head_y+size_case};
+                                    break;
+                                    case Orientation::UP:
+                                        next_position = {head_x-size_case,head_y};
+                                    break;
+                                    case Orientation::DOWN:
+                                        next_position = {head_x+size_case,head_y};
+                                    break;
+
+                                }
+                            break;
+
+                            default:
+                                input.action = Input::Action::MOVE;
+                                switch(feedback.pose.head.t)
+                                {
+                                    case Orientation::RIGHT:
+                                        next_position = {head_x+size_case,head_y};
+                                    break;
+                                    case Orientation::LEFT:
+                                        next_position = {head_x-size_case,head_y};
+                                    break;
+                                    case Orientation::UP:
+                                        next_position = {head_x,head_y-size_case};
+                                    break;
+                                    case Orientation::DOWN:
+                                        next_position = {head_x,head_y+size_case};
+                                    break;
+                                }
+                        }
+                    }
+                    cout << "prochaine position : " << next_position.x << ", " << next_position.y << endl;
+                }
 
 
         //Tourne autour de la map en évitant les murs. Ne cherche pas à obtenir la pomme.
@@ -882,7 +940,7 @@ public:
                     {
                         int my_distance_apple = abs((head_x)-feedback.apple[i].x)+abs((head_y)-feedback.apple[i].y);
                         int other_distance_apple = abs((feedback.pose_other.head.x)-feedback.apple[i].x)+abs((feedback.pose_other.head.y)-feedback.apple[i].y);
-                        if ( (my_distance_apple<other_distance_apple) and (my_distance_apple<min_distance_apple))
+                        if ( (my_distance_apple<other_distance_apple) and (my_distance_apple>0) and (my_distance_apple<min_distance_apple))
                         {
                             min_distance_apple = my_distance_apple;
                             objective = feedback.apple[i];
@@ -901,6 +959,9 @@ public:
                     }
             vector<Position> V=voisinage();
             vector<Position> vois_not_obs;
+            vector<Position> vois_not_obs_;
+
+
             int x=-1,y=-1;
             double d=dist_to_apple(feedback.pose.head.x,feedback.pose.head.y,objective);
             for(int i=0; i<3; i++){
@@ -915,12 +976,43 @@ public:
                 }
                 }
             }
+            int x_=-1,y_=-1;
+
 
 
             if(x==-1)
             {
-                if(vois_not_obs.size()==0){input.action = Input::Action::MOVE;}
-                else{x=vois_not_obs[0].x;y=vois_not_obs[0].y;}}
+                if(vois_not_obs.size()==0)
+                {
+                    for(int i=0; i<3; i++){
+                        Position P = V[i];
+                        if (!obstacle(P.x,P.y,false)){
+
+                            vois_not_obs.push_back(P);
+                            if ((dist_to_apple(P.x,P.y,objective)<d)){
+                                d=dist_to_apple(P.x,P.y,objective);
+                                x=P.x;
+                                y=P.y;
+                        }
+                        }
+                    }
+                    if (vois_not_obs.size()==0)
+                    {
+                        input.action = Input::Action::MOVE;
+                    }
+                    else
+                    {
+                        x=vois_not_obs[0].x;
+                        y=vois_not_obs[0].y;
+                    }
+                }
+
+                else
+                {
+                    x=vois_not_obs[0].x;
+                    y=vois_not_obs[0].y;
+                }
+            }
             move_to(x,y);
 
         }
@@ -933,133 +1025,226 @@ public:
         // Essaye de rejoindre le centre de la map lorsqu'il est trop en retard par rapport à l'autre snake.
         // Essaye de tuer l'autre snake lorsque c'est possible et qu'il a un score plus élevé.
         if (difficulty == 6)
+               {
+                   input.action = Input::Action::MOVE;
+                   int n_apples = feedback.apple.size();
+                   int offset_y = 80;
+                   int offset_x = -20;
+                   int distance_obstacle = 10000000;
+
+                   int head_x = feedback.pose.head.x;
+                   int head_y = feedback.pose.head.y;
+                   Position head_in_grid = { (head_x-offset_x)/size_case , (head_y-offset_y)/size_case };
+
+                   int distance_objective = 1000000;
+                   int other_max_distance_apple = 0;
+                   Position objective;
+                   Position other_last_objective;
+
+                   //Choix de l'objectif
+                   if ( (n_apples==1) and (dist_to_apple(head_x,head_y,feedback.apple[0])-dist_to_apple(feedback.pose_other.head.x,feedback.pose_other.head.y,feedback.apple[0])>=5*size_case))
+                   {
+                       objective = Position{240,300};
+                   }
+                   else
+                   {
+                       for (int i=0;i<n_apples;i++)
+                       {
+                           int my_distance_apple = dist_to_apple(head_x,head_y,feedback.apple[i]);
+                           int other_distance_apple = dist_to_apple(feedback.pose_other.head.x,feedback.pose_other.head.y,feedback.apple[i]);
+                           if ( (my_distance_apple<other_distance_apple) and (my_distance_apple>0) and (my_distance_apple<distance_objective))
+                           {
+                               distance_objective = my_distance_apple;
+                               objective = feedback.apple[i];
+                           }
+                           if (other_distance_apple>other_max_distance_apple)
+                           {
+                               other_max_distance_apple = other_distance_apple;
+                               other_last_objective = feedback.apple[i];
+                           }
+                       }
+                       if (distance_objective == 1000000)
+                       {
+                           objective = other_last_objective;
+                           distance_objective = other_max_distance_apple;
+                       }
+                   }
+
+                   array<array<int,22>,27> grid_of_distances = distance_grid(objective);
+
+                   int distance_left = grid_of_distances[head_in_grid.x-1][head_in_grid.y];
+                   int distance_right = grid_of_distances[head_in_grid.x+1][head_in_grid.y];
+                   int distance_up = grid_of_distances[head_in_grid.x][head_in_grid.y-1];
+                   int distance_down = grid_of_distances[head_in_grid.x][head_in_grid.y+1];
+
+                   vector<int> distance_voisins = {distance_left,distance_right,distance_up,distance_down};
+                   int my_distance_to_objective = *min_element(distance_voisins.begin(),distance_voisins.end());
+
+                   vector<Position> next_directions = {};
+
+                   if (my_distance_to_objective==distance_left)
+                       next_directions.push_back(Position{head_x-size_case,head_y});
+                   if (my_distance_to_objective==distance_right)
+                       next_directions.push_back(Position{head_x+size_case,head_y});
+                   if (my_distance_to_objective==distance_up)
+                       next_directions.push_back(Position{head_x,head_y-size_case});
+                   if (my_distance_to_objective==distance_down)
+                       next_directions.push_back(Position{head_x,head_y+size_case});
+
+
+                   if (my_distance_to_objective == distance_obstacle)
+                   {
+                       input.action = Input::Action::MOVE;
+                   }
+
+                   else
+                   {
+                       //On choisi la prochaine direction aléatoirement parmi les cases voisines qui correspondent à l'un des plus courts chemins.
+                       int n = next_directions.size();
+                       int random = rand()%n;
+
+                       move_to(next_directions[random].x,next_directions[random].y);
+
+                       if (score_self > score_other)
+                       {
+                           try_kill();
+                       }
+                   }
+               }
+
+        if (difficulty == 7)
         {
-            int n_apples = 1;
-            cout << n_apples << endl;
-                      int offset_y = 80;
-                      int offset_x = -20;
+//cout << 0 << endl;
+            input.action = Input::Action::MOVE;
 
-                      int distance_obstacle = 10000000;
+            int const n_apples = feedback.apple.size();
+            //cout << n_apples << endl;
+            int offset_y = 80;
+            int offset_x = -20;
 
-                      int head_x = feedback.pose.head.x;
-                      int head_y = feedback.pose.head.y;
+            int distance_obstacle = 10000000;
 
-                      Position head_in_grid = { (head_x-offset_x)/size_case , (head_y-offset_y)/size_case };
-                      Position other_head_in_grid = { (feedback.pose_other.head.x-offset_x)/size_case , (feedback.pose_other.head.y-offset_y)/size_case };
+            int head_x = feedback.pose.head.x;
+            int head_y = feedback.pose.head.y;
+            Position head = {head_x,head_y};
 
-                       cout << 0 << endl;
-                      array< array< array<int,22>,27 >, 1 > grids_of_distances;
-                    cout << 1 << endl;
-                      int my_distance_to_objective = distance_obstacle;
-                      int int_objective = -1;
-                      Position objective;
-                      int other_max_apple_distance = 0;
-                      int other_farthest_apple;
-                        cout << 2 << endl;
+            Position head_in_grid = { (head_x-offset_x)/size_case , (head_y-offset_y)/size_case };
+            Position other_head_in_grid = { (feedback.pose_other.head.x-offset_x)/size_case , (feedback.pose_other.head.y-offset_y)/size_case };
+//cout<<4<<endl;
+           array<array<int,22>,27> zeros;
+            vector<array<array<int,22>,27>> grids_of_distances;
+            for (int i=0;i<n_apples;i++)
+            {
+                grids_of_distances.push_back(zeros);
+            }
+//cout<<5<<endl;
+            int my_distance_to_objective = distance_obstacle;
+            int int_objective = -1;
+            Position objective;
+            int other_max_apple_distance = 0;
+            int other_farthest_apple;
 
-                      array<int,4> distances_left;
-                      array<int,4> distances_right;
-                      array<int,4> distances_up;
-                      array<int,4> distances_down;
+            array<int,4> distances_left;
+            array<int,4> distances_right;
+            array<int,4> distances_up;
+            array<int,4> distances_down;
 
-                      array<int,4> my_distances_to_apples;
+            array<int,4> my_distances_to_apples;
 
-                        cout << 3 << endl;
-                      for (int i=0;i<n_apples;i++)
+            for (int i=0;i<n_apples;i++)
+            {
+                    //cout<<i<<endl;
+                grids_of_distances[i] = distance_grid(feedback.apple[i]);
+
+                int other_distance_left = grids_of_distances[i][other_head_in_grid.x-1][other_head_in_grid.y];
+                int other_distance_right = grids_of_distances[i][other_head_in_grid.x+1][other_head_in_grid.y];
+                int other_distance_up = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y-1];
+                int other_distance_down = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y+1];
+
+                for (int x=1; x<26; x=x+1)
+                  {
+                      for (int y=1; y<21; y=y+1)
                       {
-                        cout << 4 << endl;
-                          grids_of_distances[i] = distance_grid(feedback.apple[i]);
-
-                          int other_distance_left = grids_of_distances[i][other_head_in_grid.x-1][other_head_in_grid.y];
-                          int other_distance_right = grids_of_distances[i][other_head_in_grid.x+1][other_head_in_grid.y];
-                          int other_distance_up = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y-1];
-                          int other_distance_down = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y+1];
-
-                            cout << feedback.apple[i].x<< endl;
-                        //  for (int x=1; x<26; x=x+1)
-                        //  {
-                        //      for (int y=1; y<21; y=y+1)
-                        //      {
-                        //          if ( obstacle(offset_x+size_case*x,offset_y+size_case*y,true) and (grids_of_distances[i][x][y] != distance_obstacle))
-                        //              grids_of_distances[i][x][y] = distance_obstacle-1;
-                        //              // Les potentielles positions suivantes de l'autre snake sont évitées, sauf si c'est l'unique solution pour ne pas perdre au coup suivant.
-                        //      }
-                        //  }
-
-                            cout << 8 << endl;
-
-                            cout << i << endl;
-                            cout << head_in_grid.x-1 << endl;
-                            cout << head_in_grid.y << endl;
-
-                          distances_left[i] = grids_of_distances[i][head_in_grid.x-1][head_in_grid.y];
-
-
-                          distances_right[i] = grids_of_distances[i][head_in_grid.x+1][head_in_grid.y];
-                          distances_up[i] = grids_of_distances[i][head_in_grid.x][head_in_grid.y-1];
-                          distances_down[i] = grids_of_distances[i][head_in_grid.x][head_in_grid.y+1];
-
-
-                cout << 7 << endl;
-                          vector<int> distance_voisins = {distances_left[i],distances_right[i],distances_up[i],distances_down[i]};
-                          vector<int> other_distance_voisins = {other_distance_left,other_distance_right,other_distance_up,other_distance_down};
-
-                          my_distances_to_apples[i] = *min_element(distance_voisins.begin(),distance_voisins.end());
-                          int other_distance_to_apple = *min_element(other_distance_voisins.begin(),other_distance_voisins.end());
-                        cout << 6 << endl;
-                          if (other_distance_to_apple > other_max_apple_distance)
-                          {
-                              other_max_apple_distance = other_distance_to_apple;
-                              other_farthest_apple = i;
-                          }
-                        cout << 5 << endl;
-                          if ( (my_distances_to_apples[i]<other_distance_to_apple) and (my_distances_to_apples[i]<my_distance_to_objective))
-                          {
-                              int_objective = i;
-                              objective = feedback.apple[i];
-                              my_distance_to_objective = my_distances_to_apples[i];
-                          }
-                      }
-
-                    cout << 6 << endl;
-                      // Si l'adversaire est plus proche de chacune des pommes, on choisi comme objectif celle dont il est le plus éloigné
-                      if (int_objective==-1)
-                      {
-                          int_objective = other_farthest_apple;
-                          objective = feedback.apple[other_farthest_apple];
-                          my_distance_to_objective = my_distances_to_apples[other_farthest_apple];
-                      }
-
-
-                    cout << objective.x<< endl;
-                      vector<Position> next_directions = {};
-
-                      if (my_distance_to_objective==distances_left[int_objective])
-                          next_directions.push_back(Position{head_x-size_case,head_y});
-                      if (my_distance_to_objective==distances_right[int_objective])
-                          next_directions.push_back(Position{head_x+size_case,head_y});
-                      if (my_distance_to_objective==distances_up[int_objective])
-                          next_directions.push_back(Position{head_x,head_y-size_case});
-                      if (my_distance_to_objective==distances_down[int_objective])
-                          next_directions.push_back(Position{head_x,head_y+size_case});
-
-
-
-                      //On choisi la prochaine direction aléatoirement parmi les cases voisines qui correspondent à l'un des plus courts chemins
-                      int n = next_directions.size();
-                      int random = rand()%n;
-
-                      for (int j=0;j<n;j++)
-                      {
-                          if (random == j)
-                              move_to(next_directions[j].x,next_directions[j].y);
-                      }
-
-                      if (score_self > score_other)
-                      {
-                          try_kill();
+                          if ( obstacle(offset_x+size_case*x,offset_y+size_case*y,true) and (grids_of_distances[i][x][y] != distance_obstacle))
+                              grids_of_distances[i][x][y] = distance_obstacle-1;
+                              // Les potentielles positions suivantes de l'autre snake sont évitées, sauf si c'est l'unique solution pour ne pas perdre au coup suivant.
                       }
                   }
+
+
+                distances_left[i] = grids_of_distances[i][head_in_grid.x-1][head_in_grid.y];
+                distances_right[i] = grids_of_distances[i][head_in_grid.x+1][head_in_grid.y];
+                distances_up[i] = grids_of_distances[i][head_in_grid.x][head_in_grid.y-1];
+                distances_down[i] = grids_of_distances[i][head_in_grid.x][head_in_grid.y+1];
+
+                vector<int> distance_voisins = {distances_left[i],distances_right[i],distances_up[i],distances_down[i]};
+                vector<int> other_distance_voisins = {other_distance_left,other_distance_right,other_distance_up,other_distance_down};
+
+                my_distances_to_apples[i] = *min_element(distance_voisins.begin(),distance_voisins.end());
+                int other_distance_to_apple = *min_element(other_distance_voisins.begin(),other_distance_voisins.end());
+                if (other_distance_to_apple > other_max_apple_distance)
+                {
+                    other_max_apple_distance = other_distance_to_apple;
+                    other_farthest_apple = i;
+                }
+                if ( (my_distances_to_apples[i]<other_distance_to_apple)  and !(head==feedback.apple[i])and (my_distances_to_apples[i]<my_distance_to_objective))
+                {
+                    int_objective = i;
+                    objective = feedback.apple[i];
+                    my_distance_to_objective = my_distances_to_apples[i];
+                }
+            }
+//cout<<6<<endl;
+            // Si l'adversaire est plus proche de chacune des pommes, on choisi comme objectif celle dont il est le plus éloigné
+            if (int_objective==-1)
+            {
+                int_objective = other_farthest_apple;
+                objective = feedback.apple[other_farthest_apple];
+                my_distance_to_objective = my_distances_to_apples[other_farthest_apple];
+            }
+
+            vector<Position> next_directions = {};
+//cout<<9<<endl;
+            if (my_distance_to_objective==distances_left[int_objective])
+                next_directions.push_back(Position{head_x-size_case,head_y});
+            if (my_distance_to_objective==distances_right[int_objective])
+                next_directions.push_back(Position{head_x+size_case,head_y});
+            if (my_distance_to_objective==distances_up[int_objective])
+                next_directions.push_back(Position{head_x,head_y-size_case});
+            if (my_distance_to_objective==distances_down[int_objective])
+                next_directions.push_back(Position{head_x,head_y+size_case});
+
+//cout<<14<<endl;
+
+            //On choisi la prochaine direction aléatoirement parmi les cases voisines qui correspondent à l'un des plus courts chemins
+            int n = next_directions.size();
+            int random = rand()%n;
+
+            move_to(next_directions[random].x,next_directions[random].y);
+
+
+            if (score_self > score_other)
+            {
+                try_kill();
+            }
+        }
+        if(difficulty == 8)
+        {
+            int a;
+            cin >> a;
+            if(a==1)
+            {
+                input.action=Input::Action::TURN_RIGHT;
+
+            }
+
+            input.action=Input::Action::MOVE;
+
+            cin.ignore();
+
+
+
+        }
 
 
     }

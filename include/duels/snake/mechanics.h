@@ -39,12 +39,12 @@ public:
         InitDisplay msg;
 
 
-        msg.snake1 = snake1().head;
 
-        display_msg.score1=0;
-        display_msg.score2=0;
 
-        int nbr_apples = 3;
+        score1()=0;
+        score2()=0;
+
+        int nbr_apples = 2;
         for(int i=0;i<nbr_apples;i++){move_apple(i);}
 
         snake1().head.x=60;
@@ -66,6 +66,7 @@ public:
         return msg;}
     void move_apple(int i)
     {
+
         srand(time(0));
         Position P={20*(rand()%25),100+20*(rand()%20)};
         bool apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end())or P==Position {snake1().head.x,snake1().head.y};
@@ -84,11 +85,46 @@ public:
             apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
 
         }
+
         if (i<apples().size()){apples()[i]=P;}
         else{apples().push_back(P);}
 
 
     }
+
+    void delete_apple(int i)
+
+    {
+        apples().erase(apples().begin()+i);
+
+
+    }
+
+    void add_apple()
+    {
+        srand(time(0));
+        Position P={20*(rand()%25),100+20*(rand()%20)};
+        bool apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end())or P==Position {snake1().head.x,snake1().head.y};
+
+        bool apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
+        bool apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
+
+        while(apple_obs1 or apple_obs2 or apples_obs)
+        {
+            P={20*(rand()%25),100+20*(rand()%20)};
+
+            apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end()) or P==Position {snake1().head.x,snake1().head.y};
+
+            apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
+
+            apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
+
+        }
+        apples().push_back(P);
+
+    }
+
+
 
 
     bool miam(int i){
@@ -114,9 +150,22 @@ public:
             else
             {for(int i=0;i<apples().size();i++)
                 {
-                    if(miam(i)){move_apple(i);score1()++;}
+
+                    if (miam(i))
+                    {
+                        score1()++;
+                        delete_apple(i);
+                        if (apples().size()==0)
+                        {
+                            add_apple();
+                        }
+                    }
                 }
 
+            }
+            if (rand()%25==1)
+            {
+                add_apple();
             }
                 if (snake1().head.t==Orientation::UP)
                     {snake1().head.y-=20;}
@@ -154,9 +203,22 @@ public:
                 else
                 {for(int i=0;i<apples().size();i++)
                     {
-                        if(miam2(i)){move_apple(i);score2()++;}
+
+                        if (miam2(i))
+                        {
+                            score2()++;
+                            delete_apple(i);
+                            if (apples().size()==0)
+                            {
+                                add_apple();
+                            }
+                        }
                     }
 
+                }
+                if (rand()%15==1)
+                {
+                    add_apple();
                 }
                 if (snake2().head.t==Orientation::UP)
                     {snake2().head.y-=20;}

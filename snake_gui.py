@@ -373,7 +373,7 @@ if game.winner == 3:
 elif game.winner < 0:
     text = 'A bug stopped the game'
     game_over()
-else: 
+else:
     text =  game.winner_name(init_msg)+ ' WIN THE GAME'
    
     game_over()
