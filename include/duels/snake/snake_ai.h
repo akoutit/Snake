@@ -15,12 +15,13 @@ class SnakeAI : public duels::Player<Input, Feedback>
 public:
     SnakeAI(int difficulty = 1) : difficulty(difficulty) {}
 
+
     double dist_to_apple(int x,int y, Position objective)
     {
-
         return abs(x-objective.x)+abs(y-objective.y);
     }
 
+    // Renvoie les positions des trois potentielles prochaines positions
     vector<Position> voisinage()
        {
            vector<Position> next_Pose = {};
@@ -80,13 +81,10 @@ public:
             if (d_x<0){input.action=Input::Action::TURN_LEFT;}
             if (d_x>0){input.action=Input::Action::TURN_RIGHT;}
             break;
-
-
-
-
             }
     }
 
+    // Renvoie la prochaine position de l'adversaire dans le cas où il continue tout droit
     Position other_next_Position()
        {
            Position other_next_Pose;
@@ -107,6 +105,7 @@ public:
            return other_next_Pose;
     }
 
+    // Essaye d'anticiper la prochaine position de l'adversaire.
     void try_kill()
            {
                vector<Position> next_Pose=voisinage();
@@ -118,16 +117,19 @@ public:
            }
 
 
+    // Retourne vrai si la position (x,y) correspond à un mur.
     bool wall(int x ,int y)
     {
 
-        bool wall_right = ( x > 480 );
+        bool wall_right = ( x > grid_width-size_case );
         bool wall_left = ( x < 0 );
-        bool wall_up = ( y < 100 );
-        bool wall_down = ( y > 480 );
+        bool wall_up = ( y < height_offset );
+        bool wall_down = ( y > grid_height-size_case );
         return wall_right or wall_left or wall_up or wall_down;
     }
 
+    // Renvoie vrai si la case (x,y) correspond à un mur, l'autre snake, où son propre corps.
+    // Si (next == true), considère également les trois potentielles prochaines positions de l'adversaire comme des obstacles.
     bool obstacle(int x, int y,bool next)
         {
             bool other_snake = (find(feedback.pose_other.body.begin(),feedback.pose_other.body.end(),Position {x,y}) !=feedback.pose_other.body.end());
@@ -158,13 +160,14 @@ public:
         x=feedback.pose.head.x;
         y=feedback.pose.head.y;
         Orientation t =feedback.pose.head.t;
-        bool wall_right = ( x == 480 ) and t == Orientation::RIGHT;
+        bool wall_right = ( x == grid_width-size_case ) and t == Orientation::RIGHT;
         bool wall_left = ( x == 0 )and t == Orientation::LEFT;
-        bool wall_up = ( y == 100 )and t == Orientation::UP;
-        bool wall_down = ( y == 480 )and t == Orientation::DOWN;
+        bool wall_up = ( y == height_offset )and t == Orientation::UP;
+        bool wall_down = ( y == grid_height-size_case )and t == Orientation::DOWN;
         return wall_right or wall_left or wall_up or wall_down;
 
     }
+
 
     void calcul_distance_voisins(vector<Position> to_check, array<array<int,22>,27> &grid)
         {
@@ -208,6 +211,8 @@ public:
             }
         }
 
+    // Fonction récursive permettant de construire un grille contenant les distances entre chaque case et la position objective.
+    // La distance d'une case obstacle est égale à distance_obstacle, et celles correspondant aux potentielles prochaines positions de l'adversaire à distance_obstacle-1.
     array<array<int,22>,27> distance_grid(Position objective)
     {
         int distance_obstacle = 10000000;
@@ -238,6 +243,7 @@ public:
         {
             grid[x_objective][y_objective] = distance_obstacle;
         }
+
         for (int x=0; x<27; x=x+1)
                 {
                     for (int y=0; y<22; y=y+1)
@@ -259,22 +265,20 @@ public:
 
     void updateInput()
     {
-        // in this function the `feedback` member variable was updated from the game
-        // TODO update the `input` member variable
-        // the `difficulty` member variable may be used to tune your AI (0 = most stupidest)
-        // do not hesitate to create a .cpp file if this function is long
+
         score_self=feedback.pose.body.size();
         score_other=feedback.pose_other.body.size();
 
 
-        // Se déplace aléatoirement sur la map sans éviter les obstacles. Continue tout droit avec une probabilité de 3/5.
+        // Niveau de difficulté très simple : Déplacements aléatoires
         if(difficulty==1)
                 {
                     srand(time(0));
 
                     int head_x = feedback.pose.head.x;
                     int head_y = feedback.pose.head.y;
-                    Position next_position = {-20,80};
+
+                    Position next_position = {-20,80}; // Correspond à un obstacle
 
                     while(obstacle(next_position.x,next_position.y,false))
                     {
@@ -339,7 +343,6 @@ public:
                                 }
                         }
                     }
-                    cout << "prochaine position : " << next_position.x << ", " << next_position.y << endl;
                 }
 
 
@@ -358,20 +361,23 @@ public:
         }
 
 
-        // Tourne autour de la map et va dans la direction de la pomme lorsqu'il est aligné sur la même ligne ou la même colonne. N'évite pas l'autre Snake.
+        // Niveau de diffulté simple
         if(difficulty == 3)
         {
-            bool apple_up = feedback.pose.head.y>feedback.apple[0].y;
-            bool apple_left = feedback.pose.head.x>feedback.apple[0].x;
 
-            if(wall()){input.action=Input::Action::TURN_RIGHT;}
+            Position objective = feedback.apple[0]; //Plus ancienne pomme encore sur la map.
 
+            if(wall())
+            {
+                input.action=Input::Action::TURN_RIGHT;
+            }
             else
             {
                 input.action=Input::Action::MOVE;
-                {if(feedback.pose.head.y==feedback.apple[0].y)
+                {
+                    if(feedback.pose.head.y==objective.y)
                     {
-                        if(feedback.pose.head.x>feedback.apple[0].x)
+                        if(feedback.pose.head.x>objective.x)
                         {if(feedback.pose.head.t==Orientation::DOWN)
                             {input.action=Input::Action::TURN_RIGHT;}
                             if(feedback.pose.head.t==Orientation::UP)
@@ -383,7 +389,7 @@ public:
                         }
 
 
-                        if(feedback.pose.head.x<feedback.apple[0].x)
+                        if(feedback.pose.head.x<objective.x)
                         {if(feedback.pose.head.t==Orientation::DOWN)
                             {input.action=Input::Action::TURN_LEFT;}
                             if(feedback.pose.head.t==Orientation::UP)
@@ -395,9 +401,9 @@ public:
                         }
 
                     }
-                    if(feedback.pose.head.x==feedback.apple[0].x)
+                    if(feedback.pose.head.x==objective.x)
                     {
-                        if(feedback.pose.head.y>feedback.apple[0].y)
+                        if(feedback.pose.head.y>objective.y)
                         {if(feedback.pose.head.t==Orientation::DOWN)
                             {input.action=Input::Action::MOVE;}
                             if(feedback.pose.head.t==Orientation::UP)
@@ -411,7 +417,7 @@ public:
 
 
 
-                        if(feedback.pose.head.y<feedback.apple[0].y)
+                        if(feedback.pose.head.y<objective.y)
                         {if(feedback.pose.head.t==Orientation::DOWN)
                             {input.action=Input::Action::MOVE;}
                             if(feedback.pose.head.t==Orientation::UP)
@@ -428,7 +434,7 @@ public:
         }
 
 
-        // Se déplace dans la direction de la pomme et évitent tous les obstacles possibles.
+        // Niveau de difficulté moyen.
         if(difficulty == 4)
         {
                     int head_x=feedback.pose.head.x;
@@ -455,8 +461,6 @@ public:
                     bool apple_left = feedback.pose.head.x>objective.x;
                     bool apple_down = feedback.pose.head.y<objective.y;
                     bool apple_right = feedback.pose.head.x<objective.x;
-
-
 
                     bool can_move_r=!obstacle(head_x+size_case,head_y,false);
                     bool can_move_l=!obstacle(head_x-size_case,head_y,false);
@@ -920,80 +924,82 @@ public:
                 }
 
 
-        // Calcule le chemin réduisant la distance à la pomme pour les cases voisines
-        // Evite tous les obstacles possibles et anticipe les positions de l'autre snake au prochain coup.
+        // Niveau de difficulté difficile.
         if(difficulty == 5)
         {
 
-                    int head_x=feedback.pose.head.x;
-                    int head_y=feedback.pose.head.y;
+            int head_x=feedback.pose.head.x;
+            int head_y=feedback.pose.head.y;
 
-                    int n_apples = feedback.apple.size();
+            int n_apples = feedback.apple.size();
 
-                    int min_distance_apple = 1000000;
-                    int other_max_distance_apple = 0;
-                    Position objective;
-                    Position other_last_objective;
+            int min_distance_apple = 1000000;
+            int other_max_distance_apple = 0;
+
+            Position objective;
+            Position other_last_objective;
 
 
-                    for (int i=0;i<n_apples;i++)
-                    {
-                        int my_distance_apple = abs((head_x)-feedback.apple[i].x)+abs((head_y)-feedback.apple[i].y);
-                        int other_distance_apple = abs((feedback.pose_other.head.x)-feedback.apple[i].x)+abs((feedback.pose_other.head.y)-feedback.apple[i].y);
-                        if ( (my_distance_apple<other_distance_apple) and (my_distance_apple>0) and (my_distance_apple<min_distance_apple))
-                        {
-                            min_distance_apple = my_distance_apple;
-                            objective = feedback.apple[i];
-                        }
-                        if (other_distance_apple>other_max_distance_apple)
-                        {
-                            other_max_distance_apple = other_distance_apple;
-                            other_last_objective = feedback.apple[i];
-                        }
+            for (int i=0;i<n_apples;i++)
+            {
+                int my_distance_apple = abs((head_x)-feedback.apple[i].x)+abs((head_y)-feedback.apple[i].y);
+                int other_distance_apple = abs((feedback.pose_other.head.x)-feedback.apple[i].x)+abs((feedback.pose_other.head.y)-feedback.apple[i].y);
+                if ( (my_distance_apple<other_distance_apple) and (my_distance_apple>0) and (my_distance_apple<min_distance_apple))
+                {
+                    min_distance_apple = my_distance_apple;
+                    objective = feedback.apple[i];
+                }
+                if (other_distance_apple>other_max_distance_apple)
+                {
+                    other_max_distance_apple = other_distance_apple;
+                    other_last_objective = feedback.apple[i];
+                }
 
-                    }
+            }
 
-                    if (min_distance_apple == 1000000)
-                    {
-                        objective = other_last_objective;
-                    }
+            if (min_distance_apple == 1000000)
+            {
+                objective = other_last_objective;
+            }
+
             vector<Position> V=voisinage();
             vector<Position> vois_not_obs;
-            vector<Position> vois_not_obs_;
-
 
             int x=-1,y=-1;
             double d=dist_to_apple(feedback.pose.head.x,feedback.pose.head.y,objective);
-            for(int i=0; i<3; i++){
+            for(int i=0; i<3; i++)
+            {
                 Position P = V[i];
-                if (!obstacle(P.x,P.y,true)){
+                if (!obstacle(P.x,P.y,true))
+                {
 
                     vois_not_obs.push_back(P);
-                    if ((dist_to_apple(P.x,P.y,objective)<d)){
+                    if ((dist_to_apple(P.x,P.y,objective)<d))
+                    {
                         d=dist_to_apple(P.x,P.y,objective);
                         x=P.x;
                         y=P.y;
-                }
+                    }
                 }
             }
-            int x_=-1,y_=-1;
 
-
-
-            if(x==-1)
+            if(x==-1) // Si aucune position n'est accessible en considérant les prochaines potentielles positions de l'adversaire comme des obstacles, on ne les considère plus comme des obstacles
             {
                 if(vois_not_obs.size()==0)
                 {
-                    for(int i=0; i<3; i++){
+                    for(int i=0; i<3; i++)
+                    {
                         Position P = V[i];
-                        if (!obstacle(P.x,P.y,false)){
+                        if (!obstacle(P.x,P.y,false))
+                        {
 
                             vois_not_obs.push_back(P);
-                            if ((dist_to_apple(P.x,P.y,objective)<d)){
+                            if ((dist_to_apple(P.x,P.y,objective)<d))
+                            {
                                 d=dist_to_apple(P.x,P.y,objective);
                                 x=P.x;
                                 y=P.y;
-                        }
+                            }
                         }
                     }
                     if (vois_not_obs.size()==0)
@@ -1020,10 +1026,7 @@ public:
 
 
 
-        // Calcul le plus court chemin vers la pomme à l'aide d'un algorithme récursif.
-        // Evite tous les obstacles possibles et anticipe les positions de l'autre snake au prochain coup.
-        // Essaye de rejoindre le centre de la map lorsqu'il est trop en retard par rapport à l'autre snake.
-        // Essaye de tuer l'autre snake lorsque c'est possible et qu'il a un score plus élevé.
+        // Niveau de difficulté très difficile.
         if (difficulty == 6)
                {
                    input.action = Input::Action::MOVE;
@@ -1044,7 +1047,7 @@ public:
                    //Choix de l'objectif
                    if ( (n_apples==1) and (dist_to_apple(head_x,head_y,feedback.apple[0])-dist_to_apple(feedback.pose_other.head.x,feedback.pose_other.head.y,feedback.apple[0])>=5*size_case))
                    {
-                       objective = Position{240,300};
+                       objective = Position{(grid_width-size_case)/2,(grid_height+height_offset)/2};
                    }
                    else
                    {
@@ -1070,6 +1073,7 @@ public:
                        }
                    }
 
+                   // Détermination de la prochaine position
                    array<array<int,22>,27> grid_of_distances = distance_grid(objective);
 
                    int distance_left = grid_of_distances[head_in_grid.x-1][head_in_grid.y];
@@ -1114,11 +1118,8 @@ public:
 
         if (difficulty == 7)
         {
-//cout << 0 << endl;
-            input.action = Input::Action::MOVE;
+            int n_apples = feedback.apple.size();
 
-            int const n_apples = feedback.apple.size();
-            //cout << n_apples << endl;
             int offset_y = 80;
             int offset_x = -20;
 
@@ -1130,14 +1131,14 @@ public:
 
             Position head_in_grid = { (head_x-offset_x)/size_case , (head_y-offset_y)/size_case };
             Position other_head_in_grid = { (feedback.pose_other.head.x-offset_x)/size_case , (feedback.pose_other.head.y-offset_y)/size_case };
-//cout<<4<<endl;
-           array<array<int,22>,27> zeros;
+
+            array<array<int,22>,27> zeros;
             vector<array<array<int,22>,27>> grids_of_distances;
             for (int i=0;i<n_apples;i++)
             {
                 grids_of_distances.push_back(zeros);
             }
-//cout<<5<<endl;
+
             int my_distance_to_objective = distance_obstacle;
             int int_objective = -1;
             Position objective;
@@ -1153,24 +1154,13 @@ public:
 
             for (int i=0;i<n_apples;i++)
             {
-                    //cout<<i<<endl;
+
                 grids_of_distances[i] = distance_grid(feedback.apple[i]);
 
                 int other_distance_left = grids_of_distances[i][other_head_in_grid.x-1][other_head_in_grid.y];
                 int other_distance_right = grids_of_distances[i][other_head_in_grid.x+1][other_head_in_grid.y];
                 int other_distance_up = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y-1];
                 int other_distance_down = grids_of_distances[i][other_head_in_grid.x][other_head_in_grid.y+1];
-
-                for (int x=1; x<26; x=x+1)
-                  {
-                      for (int y=1; y<21; y=y+1)
-                      {
-                          if ( obstacle(offset_x+size_case*x,offset_y+size_case*y,true) and (grids_of_distances[i][x][y] != distance_obstacle))
-                              grids_of_distances[i][x][y] = distance_obstacle-1;
-                              // Les potentielles positions suivantes de l'autre snake sont évitées, sauf si c'est l'unique solution pour ne pas perdre au coup suivant.
-                      }
-                  }
-
 
                 distances_left[i] = grids_of_distances[i][head_in_grid.x-1][head_in_grid.y];
                 distances_right[i] = grids_of_distances[i][head_in_grid.x+1][head_in_grid.y];
@@ -1194,7 +1184,7 @@ public:
                     my_distance_to_objective = my_distances_to_apples[i];
                 }
             }
-//cout<<6<<endl;
+
             // Si l'adversaire est plus proche de chacune des pommes, on choisi comme objectif celle dont il est le plus éloigné
             if (int_objective==-1)
             {
@@ -1204,7 +1194,7 @@ public:
             }
 
             vector<Position> next_directions = {};
-//cout<<9<<endl;
+
             if (my_distance_to_objective==distances_left[int_objective])
                 next_directions.push_back(Position{head_x-size_case,head_y});
             if (my_distance_to_objective==distances_right[int_objective])
@@ -1213,8 +1203,6 @@ public:
                 next_directions.push_back(Position{head_x,head_y-size_case});
             if (my_distance_to_objective==distances_down[int_objective])
                 next_directions.push_back(Position{head_x,head_y+size_case});
-
-//cout<<14<<endl;
 
             //On choisi la prochaine direction aléatoirement parmi les cases voisines qui correspondent à l'un des plus courts chemins
             int n = next_directions.size();
@@ -1228,23 +1216,6 @@ public:
                 try_kill();
             }
         }
-        if(difficulty == 8)
-        {
-            int a;
-            cin >> a;
-            if(a==1)
-            {
-                input.action=Input::Action::TURN_RIGHT;
-
-            }
-
-            input.action=Input::Action::MOVE;
-
-            cin.ignore();
-
-
-
-        }
 
 
     }
@@ -1257,6 +1228,7 @@ private:
     int size_case=20;
     int grid_height = 500;
     int grid_width = 500;
+    int height_offset = 100;
     int score_self=feedback.pose.body.size();
     int score_other=feedback.pose_other.body.size();
 };

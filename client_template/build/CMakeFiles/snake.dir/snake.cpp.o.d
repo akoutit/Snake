@@ -264,4 +264,11 @@ CMakeFiles/snake.dir/snake.cpp.o: \
  /home/koutit/duels/games/snake/client_template/../include/duels/snake/msg_detail.h \
  /home/koutit/duels/games/snake/client_template/../include/duels/snake/snake_ai.h \
  /opt/duels/include/duels/player.h \
+ /home/koutit/duels/games/snake/client_template/../include/duels/snake/mechanics.h \
+ /usr/include/c++/11/stdlib.h /usr/include/c++/11/random \
+ /usr/include/c++/11/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+ /usr/include/c++/11/bits/random.tcc /usr/include/c++/11/numeric \
+ /usr/include/c++/11/bits/stl_numeric.h \
+ /usr/include/c++/11/pstl/glue_numeric_defs.h \
  /home/koutit/duels/games/snake/client_template/../include/duels/snake/mechanics.h

@@ -44,7 +44,6 @@ public:
         score1()=0;
         score2()=0;
 
-        int nbr_apples = 2;
         for(int i=0;i<nbr_apples;i++){move_apple(i);}
 
         snake1().head.x=60;
@@ -102,25 +101,30 @@ public:
 
     void add_apple()
     {
+
         srand(time(0));
-        Position P={20*(rand()%25),100+20*(rand()%20)};
-        bool apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end())or P==Position {snake1().head.x,snake1().head.y};
-
-        bool apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
-        bool apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
-
-        while(apple_obs1 or apple_obs2 or apples_obs)
+        if (apples().size()<max_apples)
         {
-            P={20*(rand()%25),100+20*(rand()%20)};
+            Position P={20*(rand()%25),100+20*(rand()%20)};
+            bool apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end())or P==Position {snake1().head.x,snake1().head.y};
 
-            apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end()) or P==Position {snake1().head.x,snake1().head.y};
+            bool apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
+            bool apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
 
-            apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
+            while(apple_obs1 or apple_obs2 or apples_obs)
+            {
+                P={20*(rand()%25),100+20*(rand()%20)};
 
-            apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
+                apple_obs1=(find(snake1().body.begin(),snake1().body.end(),P) !=snake1().body.end()) or P==Position {snake1().head.x,snake1().head.y};
 
+                apple_obs2=(find(snake2().body.begin(),snake2().body.end(),P) !=snake2().body.end()) or P==Position {snake2().head.x,snake2().head.y};
+
+                apples_obs=(find(apples().begin(),apples().end(),P) !=apples().end());
+
+            }
+            apples().push_back(P);
         }
-        apples().push_back(P);
+
 
     }
 
@@ -384,7 +388,8 @@ public:
 private:
 
 
-
+    int max_apples = 5;
+    int nbr_apples = 1;
   Display display_msg;
 };
 

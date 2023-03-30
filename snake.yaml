@@ -13,3 +13,7 @@ init_display: [Pose snake1, Pose snake2, Position apples]
 input: [Action action, Action: [TURN_LEFT,TURN_RIGHT,MOVE]]
 feedback: [Snake pose,Snake pose_other,Position apple()]
 display : [Snake snake1, Snake snake2, Position apples(), float score1, float score2]
+
+
+
+
