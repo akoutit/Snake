@@ -62,7 +62,7 @@ BLACK = (0,0,0)
 scale=15
 fontSize=4*scale
 height=60*scale
-scaleidth=60*scale
+width=60*scale
 d=75
 b=(-15)
 
@@ -261,7 +261,7 @@ while again:
 
     # FENETRE #####################################
     # Création d'une fenêtre:                     #
-    screen = pygame.display.set_mode((height, scaleidth),pygame.RESIZABLE)  #
+    screen = pygame.display.set_mode((height, width),pygame.RESIZABLE)  #
     # Modification du nom de la fenêtre:          #
     pygame.display.set_caption("Snake") #
     
@@ -334,9 +334,9 @@ while again:
 this_font = pygame.font.SysFont(None, scale*4) 
 # FENETRE #####################################
 # Création d'une fenêtre:                     #
-screen = pygame.display.set_mode((height, scaleidth),pygame.RESIZABLE)  #
+screen = pygame.display.set_mode((height, width),pygame.RESIZABLE)  #
 # Modification du nom de la fenêtre:          #
-pygame.display.set_caption("AK::Snake") #
+pygame.display.set_caption("Snake") #
 
 ###############################################
 
@@ -344,24 +344,22 @@ pygame.display.set_caption("AK::Snake") #
 # Création d'une surface pour le game over:                                                                    #
 game_over_surface = this_font.render("G A M E    O V E R!", True, (ROUGE))                               #
 # Création d'un rectangle pour la surface game over (dans un but futur (lors de l'affichage) de centrage):     #
-game_over_surface_rect = game_over_surface.get_rect(midtop=(scale*24+d, scale*24+d))                                         #
+game_over_surface_rect = game_over_surface.get_rect(midtop=(scale*24+d, scale*23+d))                                         #
                                                                                                            #
-                                                                                                           #
-# Création d'une surface pour rejouer:                                                                         #
-rejouer_surface = this_font.render("PLAY AGAIN", True, (ORANGE))                                         #
+                                        #
 # Création d'un rectangle pour la surface rejouer (dans un but futur (lors de l'affichage) de centrage):       #
-rejouer_surface_rect = rejouer_surface.get_rect(midtop=(scale*16+d, scale*32+d)) 
+rejouer_surface_rect = rejouer_surface.get_rect(midtop=(scale*16+d, scale*33+d)) 
 
 
 
 
 
 # On dessine une surface de jeu:
-pygame.draw.rect(screen, (PINK), Rect(scale*0, scale*10, scale*50, scale*40), 1)
-def game_over():
+pygame.draw.rect(screen, (BLACK), Rect(scale*0, scale*10, scale*50, scale*40), 1)
+def game_over(text):
 	draw()
-	game_over_surface = this_font.render("G A M E    O V E R!", True, (PINK)) 
-	rejouer_surface = this_font.render(text, True, (PINK)) 
+	game_over_surface = this_font.render("G A M E    O V E R!", True, (BLACK)) 
+	rejouer_surface = this_font.render(text, True, (BLACK)) 
 
 	
 	screen.blit(game_over_surface, game_over_surface_rect)
@@ -369,18 +367,21 @@ def game_over():
 	pygame.display.flip()
 	
 
+text = 'A bug stopped the game'
 
-if game.winner == 3:
-    text = 'Draw'
-    game_over()
-
-elif game.winner < 0:
-    text = 'A bug stopped the game'
-    game_over()
-else:
+if game.winner == 1 or game.winner == 2:
     text =  game.winner_name(init_msg)+ ' WIN THE GAME'
+    
+    game_over(text)
+
+elif game.winner == 3:
+    text = '                Draw'
    
-    game_over()
+    game_over(text)
+else:
+    
+    text = 'A bug stopped the game'
+    game_over(text)
 
 
 pygame.display.update()

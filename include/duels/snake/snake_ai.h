@@ -346,23 +346,12 @@ public:
                 }
 
 
-        //Tourne autour de la map en évitant les murs. Ne cherche pas à obtenir la pomme.
-        if(difficulty == 2)
-        {
-            if(wall())
-            {
-                input.action=Input::Action::TURN_RIGHT;
-
-            }
-            else{input.action=Input::Action::MOVE;}
 
 
-
-        }
 
 
         // Niveau de diffulté simple
-        if(difficulty == 3)
+        if(difficulty == 2)
         {
 
             Position objective = feedback.apple[0]; //Plus ancienne pomme encore sur la map.
@@ -435,7 +424,7 @@ public:
 
 
         // Niveau de difficulté moyen.
-        if(difficulty == 4)
+        if(difficulty == 3)
         {
                     int head_x=feedback.pose.head.x;
                     int head_y=feedback.pose.head.y;
@@ -925,7 +914,7 @@ public:
 
 
         // Niveau de difficulté difficile.
-        if(difficulty == 5)
+        if(difficulty == 4)
         {
 
             int head_x=feedback.pose.head.x;
@@ -1027,7 +1016,7 @@ public:
 
 
         // Niveau de difficulté très difficile.
-        if (difficulty == 6)
+        if (difficulty == 5)
                {
                    input.action = Input::Action::MOVE;
                    int n_apples = feedback.apple.size();
@@ -1116,7 +1105,7 @@ public:
                    }
                }
 
-        if (difficulty == 7)
+        if (difficulty == 6)
         {
             int n_apples = feedback.apple.size();
 

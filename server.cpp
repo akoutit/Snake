@@ -12,7 +12,7 @@ using GameIO = duels::Server<InitDisplay, Input, Feedback, Display>;
 
 int main(int argc, char** argv)
 {
-  GameIO game_io("snake", Timeout(200), Refresh(300));
+  GameIO game_io("snake", Timeout(400), Refresh(600));
   
   // simulation time
   [[maybe_unused]] const double dt(game_io.samplingTime());
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   InitDisplay init = mechanics.initGame();
 
   // inform displays and get players (multithread by default for simultaneous games)
-  const auto [player1, player2] = game_io.initPlayers<SnakeAI>(argc, argv, init, 1,1); {}
+  const auto [player1, player2] = game_io.initPlayers<SnakeAI>(argc, argv, init, 5,5); {}
 
   
 

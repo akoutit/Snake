@@ -96,7 +96,6 @@ public:
     {
         apples().erase(apples().begin()+i);
 
-
     }
 
     void add_apple()
@@ -388,7 +387,7 @@ public:
 private:
 
 
-    int max_apples = 5;
+    int max_apples = 4;
     int nbr_apples = 1;
   Display display_msg;
 };
